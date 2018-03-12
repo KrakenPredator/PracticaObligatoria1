@@ -8,4 +8,4 @@ def haar(img):
     detectados = cochesCasacade.detectMultiScale(gray)
     for (x,y,w,h) in detectados:
         cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-    return imgf
+    return img
