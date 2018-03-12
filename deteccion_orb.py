@@ -4,16 +4,29 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import pylab
 
-carga = 0
+indices = dict(algorithm = 6,
+               table_number = 6,
+               key_size = 12,
+               multi_probe_level = 1)
+busqueda = dict(checks = 50)
+
+flann = cv2.FlannBasedMatcher(indices, busqueda)
+orb = cv2.ORB_create(nfeatures=100, nlevels=4, scaleFactor=1.3)
+
 for file in glob.glob('training/*.jpg'):
-    if carga < 4:
-        image = cv2.imread(file, 0)
-        orb = cv2.ORB_create(nfeatures=100, nlevels=4, scaleFactor=1.3)
-        kp, des = orb.detectAndCompute(image, None)
-        print(des)
-        image = cv2.drawKeypoints(image, kp, None, color=(0,255,0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        cv2.imwrite("image"+str(carga)+".jpg", image)
-    carga += 1
+    image = cv2.imread(file, 0)
+    kp, des = orb.detectAndCompute(image, None)
+    flann.add([des])
+    print(len(flann.getTrainDescriptors()))
+
+flann.train()
+
+imgPrueba = cv2.imread("testing/test11.jpg", 0)
+kp, des = orb.detectAndCompute(imgPrueba, None)
+matches = flann.knnMatch(des, k=2)
+img3 = cv2.drawMatches(imgPrueba, kp, None, None, matches)
+
+cv2.imwrite("fuera.jpg", img3)
 
 '''aqui iria la carga de imagenes en bucle
 buscar en internet cómo cargar muchas imágenes de una carpeta

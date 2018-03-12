@@ -1,3 +1,11 @@
-Este es el mas sencillo porque primero se coge el xml con el cascade classifier
-y luego se busca en la imagen con cv2.detectmultiscale
-Este es muy muy sencillo, buscar ejemplos en internet y buscar lo de detección facial que viene con cv2
+import cv2
+
+cochesCasacade = cv2.CascadeClassifier("haar/coches.xml")
+
+
+def haar(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detectados = cochesCasacade.detectMultiScale(gray)
+    for (x,y,w,h) in detectados:
+        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+    return imgf
