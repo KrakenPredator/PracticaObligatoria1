@@ -19,7 +19,7 @@ descs = None
 for file in glob.glob('training/*.jpg'):
     imagenEntrenamiento = cv2.imread(file, 0)
     trainKP, trainDesc = detector.detectAndCompute(imagenEntrenamiento, None)
-    flann.add(trainDesc)
+    flann.add([trainDesc])
     for i in range(len(trainKP)):
         kp = trainKP[i]
         points.append(trainKP[i])
@@ -28,16 +28,23 @@ for file in glob.glob('training/*.jpg'):
     else:
         descs = np.concatenate((descs, trainDesc))
 
-def matchIndividual(img1, img2):
+def matchIndividual(img1):
     kp, des = detector.detectAndCompute(img1, None)
-    kp2, des2 = detector.detectAndCompute(img2, None)
-    knnmatches = flann.knnMatch(des, k=2)
+    knnmatches = flann.knnMatch(des, k=5)
     salida = 0
+    salida = cv2.drawKeypoints(img1, kp, salida, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     res = []
-    for m, n in knnmatches:
-        print(m.distance, "-", n.distance)
-        res.append(m)
-    salida = cv2.drawMatches(img1, kp, img2, kp2, res, flags=2, outImg=salida)
+    for m, n, k, j, i in knnmatches:
+        if m.distance < n.distance - 10:
+            res.append(kp[m.queryIdx])
+        if n.distance < k.distance - 10:
+            res.append(kp[n.queryIdx])
+        if k.distance < j.distance - 10:
+            res.append(kp[k.queryIdx])
+        if j.distance < i.distance - 10:
+            res.append(kp[j.queryIdx])
+    print(res)
+    salida = cv2.drawKeypoints(img1, res, salida, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     return salida
 
 
@@ -65,11 +72,12 @@ def orb(image):
 
     output = cv2.drawKeypoints(image, puntetes, output, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     salida = 0
-    salida = cv2.drawMatches(imgPrueba,kp,output,points,res, flags=2, outImg=salida)
+    salida = cv2.drawMatches(imgPrueba, kp, output, points, res, flags=2, outImg=salida)
     return salida
 
 
-imgPrueba = cv2.imread("testing/test20.jpg", 0)
-imgdos = cv2.imread("training/frontal_40.jpg", 0)
-imOut = matchIndividual(imgdos, imgdos)
+imgPrueba = cv2.imread("testing/test5.jpg", 0)
+imgdos = cv2.imread("training/frontal_27.jpg", 0)
+
+imOut = matchIndividual(imgPrueba)
 cv2.imwrite("outpur.jpg", imOut)
