@@ -2,6 +2,7 @@ import glob
 
 import cv2
 import numpy as np
+import scipy
 import itertools
 import sys
 
@@ -34,17 +35,36 @@ def matchIndividual(img1):
     salida = 0
     salida = cv2.drawKeypoints(img1, kp, salida, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     res = []
-    for m, n, k, j, i in knnmatches:
-        if m.distance < n.distance - 10:
+    '''''
+    for m, n in knnmatches:
+        if m.distance < n.distance - 4:
             res.append(kp[m.queryIdx])
-        if n.distance < k.distance - 10:
+
+    '''''
+
+    filtro = 13
+
+    for m, n, k, j, i in knnmatches:
+        if m.distance < n.distance - filtro:
+            res.append(kp[m.queryIdx])
+        if n.distance < k.distance - filtro:
             res.append(kp[n.queryIdx])
-        if k.distance < j.distance - 10:
+        if k.distance < j.distance - filtro:
             res.append(kp[k.queryIdx])
-        if j.distance < i.distance - 10:
+        if j.distance < i.distance - filtro:
             res.append(kp[j.queryIdx])
+
     print(res)
     salida = cv2.drawKeypoints(img1, res, salida, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+
+    centers = []
+    k = 0
+    for j in range(len(res)):
+        centers.append(calc_center(j,imgPrueba))
+        print("Center",centers.__getitem__(k))
+        k = k+1
+
     return salida
 
 
@@ -73,10 +93,37 @@ def orb(image):
     output = cv2.drawKeypoints(image, puntetes, output, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     salida = 0
     salida = cv2.drawMatches(imgPrueba, kp, output, points, res, flags=2, outImg=salida)
+
+
     return salida
 
+#Codigo obtenido de https://github.com/rainer85ah/CV/blob/master/Project3/Main.py
+def calc_center(kp, img):
+    x_key_point, y_key_point = kp.pt[:2]
+    height, weight = img.shape[:2]
+    x_center = weight / 2
+    y_center = height / 2
+    center_img = (x_center, y_center)
 
-imgPrueba = cv2.imread("testing/test5.jpg", 0)
+    xVector = x_center - x_key_point
+    yVector = y_center - y_key_point
+    vector = (xVector, yVector)
+
+    module = scipy.sqrt(scipy.power((x_center - x_key_point), 2) + scipy.power((y_center - y_key_point), 2))
+
+    if (y_center - y_key_point) == 0:
+        angle = 0
+    else:
+        angle = scipy.arctan((x_center - x_key_point) / (y_center - y_key_point))
+
+    distance_center = (module, vector, angle, center_img)
+    return distance_center
+
+
+
+
+
+imgPrueba = cv2.imread("testing/test16.jpg", 0)
 imgdos = cv2.imread("training/frontal_27.jpg", 0)
 
 imOut = matchIndividual(imgPrueba)
