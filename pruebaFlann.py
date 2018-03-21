@@ -21,6 +21,7 @@ for file in glob.glob('training/*.jpg'):
     imagenEntrenamiento = cv2.imread(file, 0)
     trainKP, trainDesc = detector.detectAndCompute(imagenEntrenamiento, None)
     flann.add([trainDesc])
+    flann.train()
     for i in range(len(trainKP)):
         kp = trainKP[i]
         points.append(trainKP[i])
@@ -29,73 +30,53 @@ for file in glob.glob('training/*.jpg'):
     else:
         descs = np.concatenate((descs, trainDesc))
 
+
+def maximo(acumulador):
+    max = 0
+    f = 0
+    c = 0
+    for fila in range(len(acumulador)):
+        for columna in range(len(acumulador)):
+            # Que el numero de votos sea maximo y que en su vecindad no haya un vecino sin votos
+            if acumulador[fila][columna] > max:
+                max = acumulador[fila][columna]
+                f = fila
+                c = columna
+
+    return (f*10, c*10)  # (Fila,Columna)
+
+
 def matchIndividual(img1):
     kp, des = detector.detectAndCompute(img1, None)
     knnmatches = flann.knnMatch(des, k=5)
-    salida = 0
-    salida = cv2.drawKeypoints(img1, kp, salida, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     res = []
-    '''''
-    for m, n in knnmatches:
-        if m.distance < n.distance - 4:
-            res.append(kp[m.queryIdx])
 
-    '''''
 
-    filtro = 13
-
+    filtro = 12.5
     for m, n, k, j, i in knnmatches:
+
         if m.distance < n.distance - filtro:
-            res.append(kp[m.queryIdx])
-        if n.distance < k.distance - filtro:
             res.append(kp[n.queryIdx])
-        if k.distance < j.distance - filtro:
+        if m.distance < k.distance - filtro:
             res.append(kp[k.queryIdx])
-        if j.distance < i.distance - filtro:
+        if m.distance < j.distance - filtro:
             res.append(kp[j.queryIdx])
+        if m.distance < i.distance - filtro:
+            res.append(kp[i.queryIdx])
 
-    print(res)
-    salida = cv2.drawKeypoints(img1, res, salida, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
+    salida = 0
+    salida = cv2.drawKeypoints(img1, [], salida)
+    acumulador = np.zeros((int(img1.shape[0]/10)+20, int(img1.shape[1]/10)+20))  # Variable que acumulara los votos de los distintos keypoints
 
     centers = []
-    k = 0
-    for j in range(len(res)):
+    for j in res:
         centers.append(calc_center(j,imgPrueba))
-        print("Center",centers.__getitem__(k))
-        k = k+1
+        acumulador[int(j.pt[0]/10)][int(j.pt[1]/10)] += 1
+
+    cv2.circle(salida, maximo(acumulador), 10, (0, 0, 255), 1)
 
     return salida
 
-
-def orb(image):
-    imgPrueba = image
-    kp, des = detector.detectAndCompute(imgPrueba, None)
-    output = imgPrueba.copy()
-    imgPrueba = cv2.drawKeypoints(image, kp, imgPrueba, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
-    knnmatches = flann.knnMatch(des, k=5)
-    encontrados = []
-    puntetes = []
-    res = []
-    for m, n in knnmatches:
-        print(n.distance)
-        print(m.distance)
-        if m.distance < 0.7 * n.distance:
-            res.append(m)
-    for i in range(len(res)):
-        match = res[i]
-        indice = match.trainIdx
-        imgIdx = match.imgIdx
-        encontrados.append(descs[indice])
-        puntetes.append(points[indice])
-
-    output = cv2.drawKeypoints(image, puntetes, output, (0, 255, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    salida = 0
-    salida = cv2.drawMatches(imgPrueba, kp, output, points, res, flags=2, outImg=salida)
-
-
-    return salida
 
 #Codigo obtenido de https://github.com/rainer85ah/CV/blob/master/Project3/Main.py
 def calc_center(kp, img):
@@ -123,7 +104,7 @@ def calc_center(kp, img):
 
 
 
-imgPrueba = cv2.imread("testing/test16.jpg", 0)
+imgPrueba = cv2.imread("testing/test11.jpg", 0)
 imgdos = cv2.imread("training/frontal_27.jpg", 0)
 
 imOut = matchIndividual(imgPrueba)
