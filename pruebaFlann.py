@@ -42,7 +42,7 @@ def maximo(acumulador):
                 max = acumulador[fila][columna]
                 f = fila
                 c = columna
-
+    print(max)
     return (f*10, c*10)  # (Fila,Columna)
 
 
@@ -50,11 +50,8 @@ def matchIndividual(img1):
     kp, des = detector.detectAndCompute(img1, None)
     knnmatches = flann.knnMatch(des, k=5)
     res = []
-
-
     filtro = 12.5
     for m, n, k, j, i in knnmatches:
-
         if m.distance < n.distance - filtro:
             res.append(kp[n.queryIdx])
         if m.distance < k.distance - filtro:
@@ -65,7 +62,7 @@ def matchIndividual(img1):
             res.append(kp[i.queryIdx])
 
     salida = 0
-    salida = cv2.drawKeypoints(img1, [], salida)
+    salida = cv2.drawKeypoints(img1, res, salida, color=(0, 255, 0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     acumulador = np.zeros((int(img1.shape[0]/10)+20, int(img1.shape[1]/10)+20))  # Variable que acumulara los votos de los distintos keypoints
 
     centers = []
@@ -73,7 +70,7 @@ def matchIndividual(img1):
         centers.append(calc_center(j,imgPrueba))
         acumulador[int(j.pt[0]/10)][int(j.pt[1]/10)] += 1
 
-    cv2.circle(salida, maximo(acumulador), 10, (0, 0, 255), 1)
+    cv2.circle(salida, maximo(acumulador), 25, (0, 0, 255), 2)
 
     return salida
 
