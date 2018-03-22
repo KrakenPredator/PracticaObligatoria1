@@ -42,7 +42,10 @@ def maximo(acumulador):
                 f = fila
                 c = columna
     print(max)
-    return (f*factorEscala, c*factorEscala)  # (Fila,Columna)
+    if max >= 4:
+        return (f*factorEscala, c*factorEscala)  # (Fila,Columna)
+    else:
+        return (0, 0)
 
 
 def matchIndividual(img1):
@@ -50,14 +53,15 @@ def matchIndividual(img1):
     knnmatches = flann.knnMatch(des, k=5)
     res = []
     filtro = 12.5
+    factor = 1
     for m, n, k, j, i in knnmatches:
-        if m.distance < n.distance - filtro:
+        if m.distance < n.distance*factor - filtro:
             res.append(kp[n.queryIdx])
-        if m.distance < k.distance - filtro:
+        if m.distance < k.distance*factor - filtro:
             res.append(kp[k.queryIdx])
-        if m.distance < j.distance - filtro:
+        if m.distance < j.distance*factor - filtro:
             res.append(kp[j.queryIdx])
-        if m.distance < i.distance - filtro:
+        if m.distance < i.distance*factor - filtro:
             res.append(kp[i.queryIdx])
 
     salida = 0
