@@ -3,8 +3,6 @@ import glob
 import cv2
 import numpy as np
 import scipy
-import itertools
-import sys
 
 detector=cv2.ORB_create(nfeatures=100, nlevels=4, scaleFactor=1.3)
 
@@ -15,6 +13,7 @@ index_params = dict(algorithm=FLANN_INDEX_LSH,
                     multi_probe_level=1)
 search_params = dict(checks=-1)
 points = []
+factorEscala = 20
 flann = cv2.FlannBasedMatcher(index_params, search_params)
 descs = None
 for file in glob.glob('training/*.jpg'):
@@ -43,7 +42,7 @@ def maximo(acumulador):
                 f = fila
                 c = columna
     print(max)
-    return (f*10, c*10)  # (Fila,Columna)
+    return (f*factorEscala, c*factorEscala)  # (Fila,Columna)
 
 
 def matchIndividual(img1):
@@ -62,13 +61,13 @@ def matchIndividual(img1):
             res.append(kp[i.queryIdx])
 
     salida = 0
-    salida = cv2.drawKeypoints(img1, res, salida, color=(0, 255, 0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    acumulador = np.zeros((int(img1.shape[0]/10)+20, int(img1.shape[1]/10)+20))  # Variable que acumulara los votos de los distintos keypoints
+    salida = cv2.drawKeypoints(img1, [], salida, color=(0, 255, 0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    acumulador = np.zeros((int(img1.shape[0]/factorEscala)+(factorEscala*2), int(img1.shape[1]/factorEscala)+(factorEscala*2)))  # Variable que acumulara los votos de los distintos keypoints
 
     centers = []
     for j in res:
-        centers.append(calc_center(j,imgPrueba))
-        acumulador[int(j.pt[0]/10)][int(j.pt[1]/10)] += 1
+        centers.append(calc_center(j,img1))
+        acumulador[int(j.pt[0]/factorEscala)][int(j.pt[1]/factorEscala)] += 1
 
     cv2.circle(salida, maximo(acumulador), 25, (0, 0, 255), 2)
 
@@ -99,10 +98,8 @@ def calc_center(kp, img):
 
 
 
-
-
-imgPrueba = cv2.imread("testing/test11.jpg", 0)
-imgdos = cv2.imread("training/frontal_27.jpg", 0)
-
-imOut = matchIndividual(imgPrueba)
-cv2.imwrite("outpur.jpg", imOut)
+for file in glob.glob('testing/*.jpg'):
+    name = "salidasOrb/salidaT"+file[9:]
+    imgTest = cv2.imread(file, 0)
+    imgOut = matchIndividual(imgTest)
+    cv2.imwrite(name, imgOut)

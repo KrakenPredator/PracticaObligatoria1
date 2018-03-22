@@ -3,7 +3,7 @@ import cv2
 
 import pruebaFlann
 
-cap = cv2.VideoCapture("Videos/video1.wmv")
+cap = cv2.VideoCapture("Videos/video2.wmv")
 
 while(cap.isOpened()):
     ret, frame = cap.read()
